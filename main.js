@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const CSV_PATH = 'assets/AI_Avatar_Search_History_Sheet - 工作表1.csv';
+  // 對含有中文與空格的路徑進行 encodeURI
+  const CSV_PATH = encodeURI('assets/AI_Avatar_Search_History_Sheet - 工作表1.csv');
   let newsData = [];
   let countdown = 10;
   let timerInterval = null;
@@ -18,56 +19,87 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(updateClock, 1000);
   updateClock();
 
-  // 2. CSV 解析器
+  /**
+   * 2. 健壯的 CSV 解析器（支援跨行雙引號與欄位含逗號）
+   */
   function parseCSV(text) {
-    const lines = text.split('\n');
-    const result = [];
-    
-    // 解析 CSV，處理雙引號包覆與換行情況
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      
-      // 使用正規表達式拆分欄位
-      const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-      const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+    const rows = [];
+    let currentRow = [];
+    let currentField = '';
+    let inQuotes = false;
 
-      if (cols.length >= 3) {
-        const date = cols[0] ? cols[0].replace(/"/g, '').trim() : 'N/A';
-        const category = cols[1] ? cols[1].replace(/"/g, '').trim() : 'NEWS';
-        const title = cols[2] ? cols[2].replace(/"/g, '').trim() : '';
-        const url = cols[3] ? cols[3].replace(/"/g, '').trim() : '#';
-        const summary = cols[4] ? cols[4].replace(/"/g, '').trim() : '無詳細內容';
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const nextChar = text[i + 1];
 
-        if (title) {
-          result.push({ date, category, title, url, summary });
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          currentField += '"';
+          i++; // 跳過轉義雙引號
+        } else {
+          inQuotes = !inQuotes; // 切換引號狀態
         }
+      } else if (char === ',' && !inQuotes) {
+        currentRow.push(currentField.trim());
+        currentField = '';
+      } else if ((char === '\r' || char === '\n') && !inQuotes) {
+        if (char === '\r' && nextChar === '\n') {
+          i++; // 處理 \r\n
+        }
+        currentRow.push(currentField.trim());
+        if (currentRow.length > 1 || currentRow[0] !== '') {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+        currentField = '';
+      } else {
+        currentField += char;
       }
     }
-    return result;
+
+    if (currentField || currentRow.length > 0) {
+      currentRow.push(currentField.trim());
+      rows.push(currentRow);
+    }
+
+    // 將二維陣列轉為物件陣列（跳過標頭列）
+    const parsedData = [];
+    for (let k = 1; k < rows.length; k++) {
+      const row = rows[k];
+      if (row.length >= 3 && row[2]) { // 確保至少有 Title
+        parsedData.push({
+          date: row[0] || 'N/A',
+          category: row[1] || 'NEWS',
+          title: row[2] || '',
+          url: row[3] || '#',
+          summary: row[4] || '無詳細摘要'
+        });
+      }
+    }
+    return parsedData;
   }
 
-  // 3. 隨機選取 3 則新聞並渲染
+  // 3. 隨機選取 3 則新聞 Title 與內容並渲染
   function renderRandomNews() {
     if (newsData.length === 0) return;
 
-    // 複製並隨機排序
+    // 隨機抽樣 3 則不重複新聞
     const shuffled = [...newsData].sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, 3);
+    const selected = shuffled.slice(0, Math.min(3, newsData.length));
 
     // 更新跑馬燈
     tickerEl.textContent = selected.map(item => `[${item.category}] ${item.title}`).join(' /// ');
 
     // 渲染新聞卡片
     container.innerHTML = '';
-    selected.forEach(item => {
+    selected.forEach((item, index) => {
       const card = document.createElement('article');
       card.className = 'news-card card-glitch-anim';
 
       card.innerHTML = `
         <div class="news-tag-row">
           <span class="news-category">${escapeHtml(item.category)}</span>
-          <span class="news-date">${escapeHtml(item.date)}</span>
+          <span class="news-date">TOPIC #${index + 1} // ${escapeHtml(item.date)}</span>
         </div>
         <h3 class="news-title">${escapeHtml(item.title)}</h3>
         <div class="news-summary">${escapeHtml(item.summary)}</div>
@@ -84,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 防 XSS 轉義
   function escapeHtml(str) {
+    if (!str) return '';
     return str.replace(/[&<>"']/g, match => {
       const escape = {
         '&': '&amp;',
@@ -96,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 4. 倒數計時器控制
+  // 4. 倒數計時器控制 (10 秒循環)
   function startTimer() {
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
@@ -112,7 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadCSVData() {
     try {
       const response = await fetch(CSV_PATH);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: 找不到檔案或路徑錯誤 (${CSV_PATH})`);
+      }
       const text = await response.text();
       newsData = parseCSV(text);
 
@@ -120,19 +155,24 @@ document.addEventListener('DOMContentLoaded', () => {
         renderRandomNews();
         startTimer();
       } else {
-        container.innerHTML = `<div class="loading-card">NO DATA FOUND IN CSV</div>`;
+        container.innerHTML = `<div class="loading-card">⚠️ 檔案已讀取，但未解析出有效新聞數據</div>`;
       }
     } catch (err) {
       console.error('Error fetching CSV:', err);
-      container.innerHTML = `<div class="loading-card">ERROR LOADING CSV: ${err.message}</div>`;
+      container.innerHTML = `
+        <div class="loading-card" style="color: var(--primary-pink); border-color: var(--primary-pink);">
+          ❌ CSV 讀取失敗: ${escapeHtml(err.message)}<br><br>
+          <small style="color: #aaa;">提示：請確認專案根目錄下是否有 <b>assets/AI_Avatar_Search_History_Sheet - 工作表1.csv</b> 檔案，且檔名大小寫完全一致。</small>
+        </div>
+      `;
     }
   }
 
-  // 手動 Override 按鈕
+  // 手動 Refresh 按鈕
   refreshBtn.addEventListener('click', () => {
     renderRandomNews();
   });
 
-  // 初始化啟動
+  // 啟動
   loadCSVData();
 });
