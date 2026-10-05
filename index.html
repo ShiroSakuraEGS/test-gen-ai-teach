@@ -2,81 +2,62 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>// ARCHIVE_NEO_2077 //</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CYBER_NEWS // AI_AVATAR_DAILY</title>
   <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- CRT 掃描線光影疊層 -->
+  <!-- 掃描線遮罩 -->
   <div class="scanlines"></div>
+  <div class="vignette"></div>
 
-  <!-- 背景 Canvas (Matrix / Glitch Rain) -->
-  <canvas id="bg-canvas"></canvas>
+  <!-- 頂部 HUD 系統資訊欄 -->
+  <header class="hud-bar">
+    <div class="hud-left">
+      <span class="pulse-indicator"></span>
+      <span id="sys-status">SYS_RECV // ONLINE</span>
+    </div>
+    <div class="hud-right">
+      <span>REFRESH IN: <b id="countdown-timer">10s</b></span>
+      <span>SYS_TIME: <b id="clock-display">00:00:00</b></span>
+    </div>
+  </header>
 
-  <main class="mobile-container">
-    <!-- 個人檔案區塊 -->
-    <header class="profile-card">
-      <div class="avatar-wrapper">
-        <div class="avatar-glitch-border"></div>
-        <div class="avatar-placeholder">CYBER_USER</div>
-      </div>
-      <h1 class="glitch-title" data-text="CYBER_USER.exe">CYBER_USER.exe</h1>
-      <p class="subtitle">&lt;HYPERPOP_DEVELOPER /&gt;</p>
-      <div class="tag-group">
-        <span class="tag pink">Y2K_DEV</span>
-        <span class="tag green">GLITCH_ART</span>
-        <span class="tag blue">WEB3</span>
-      </div>
-    </header>
+  <!-- 全局新聞走馬燈 -->
+  <div class="ticker-wrap">
+    <div class="ticker-label">BREAKING</div>
+    <div class="ticker-text" id="ticker-content">LOADING AI AVATAR DATABASE...</div>
+  </div>
 
-    <!-- 動態跑馬燈 -->
-    <section class="marquee-wrapper">
-      <div class="marquee-content">
-        [SYSTEM: OK] // WELCOME TO THE NEXT GEN // NO SIGNAL FOUND // 100% HYPERACTIVE //
-      </div>
+  <main class="app-container">
+    <!-- 日報主標題 -->
+    <section class="bulletin-header">
+      <div class="meta-tag">SYSTEM BULLETIN // VOL.2026</div>
+      <h1 class="glitch-title" data-text="AI_AVATAR_DAILY">AI_AVATAR_DAILY</h1>
+      <p class="bulletin-sub">[ 虛擬角色與 AI 伴侶情報日報 // 10S AUTO-REFRESH ]</p>
     </section>
 
-    <!-- 專案與連結按鈕 (Hyperpop Style) -->
-    <section class="links-section">
-      <a href="#" class="cyber-btn pink-btn">
-        <span class="btn-glitch"></span>
-        <span class="btn-text">⚡ MAIN_PROJECTS // 專案集</span>
-      </a>
-      <a href="#" class="cyber-btn blue-btn">
-        <span class="btn-glitch"></span>
-        <span class="btn-text">👾 GITHUB_PROFILE // 碼農基地</span>
-      </a>
-      <a href="#" class="cyber-btn green-btn">
-        <span class="btn-glitch"></span>
-        <span class="btn-text">🌐 SOCIAL_MATRIX // 聯絡鏈結</span>
-      </a>
+    <!-- 3 則隨機新聞卡片展示區 -->
+    <section class="news-grid" id="news-container">
+      <div class="loading-card">INITIALIZING CYBER LINK TO CSV...</div>
     </section>
 
-    <!-- 技能區塊 -->
-    <section class="tech-grid">
-      <div class="tech-card">
-        <h3>[SYSTEM_STACK]</h3>
-        <ul>
-          <li><span>JS/TS</span> <progress value="90" max="100"></progress></li>
-          <li><span>CSS3/GLITCH</span> <progress value="95" max="100"></progress></li>
-          <li><span>REACT/VITE</span> <progress value="85" max="100"></progress></li>
-        </ul>
-      </div>
+    <!-- 系統控制按鈕 -->
+    <section class="control-panel">
+      <button class="cyber-btn" id="manual-refresh-btn">
+        <span class="btn-glitch"></span>
+        <span class="btn-text">⚡ OVERRIDE_FETCH_NOW</span>
+      </button>
     </section>
-
-    <!-- 終端機控制台頁腳 -->
-    <footer class="terminal-footer">
-      <div class="terminal-header">
-        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-        <span class="term-title">terminal.sh</span>
-      </div>
-      <div class="terminal-body" id="terminal-log">
-        <p>[SYS_INIT] Loading glitch core drivers...</p>
-        <p>[TIME] <span id="sys-clock">00:00:00</span> UTC</p>
-      </div>
-    </footer>
   </main>
 
-  <script src="script.js"></script>
+  <!-- 底部導航區 -->
+  <footer class="bottom-nav">
+    <span class="nav-brand">CYBER_CORE v3.0</span>
+    <span class="nav-status">CSV_SOURCE: ACTIVE</span>
+  </footer>
+
+  <script src="main.js"></script>
 </body>
 </html>
